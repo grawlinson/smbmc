@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<IPMI>
+  <PSInfo at_w_PSTimeoutValue="0" at_b_PSTimeoutEnable="0" BBP_TIMEOUT_VALUE="0">
+    <PSItem a_b_PS_Status_I2C="ff" psType="0" acInVoltage="0" acInCurrent="0" dc12OutVoltage="0" dc12OutCurrent="0" temp1="0" temp2="0" fan1="0" fan2="0" dcOutPower="0" acInPower="0" name=""/>
+    <PSItem a_b_PS_Status_I2C="1" psType="1" acInVoltage="ef" acInCurrent="167" dc12OutVoltage="79" dc12OutCurrent="1676" temp1="28" temp2="37" fan1="b4e" fan2="f07" dcOutPower="45" acInPower="54" name="PSU0SERIAL0NO00"/>
+    <PSItem a_b_PS_Status_I2C="ff" psType="0" acInVoltage="0" acInCurrent="0" dc12OutVoltage="0" dc12OutCurrent="0" temp1="0" temp2="0" fan1="0" fan2="0" dcOutPower="0" acInPower="0" name=""/>
+    <PSItem a_b_PS_Status_I2C="ff" psType="0" acInVoltage="0" acInCurrent="0" dc12OutVoltage="0" dc12OutCurrent="0" temp1="0" temp2="0" fan1="0" fan2="0" dcOutPower="0" acInPower="0" name=""/>
+  </PSInfo>
+</IPMI>

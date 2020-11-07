@@ -40,7 +40,7 @@ class TestClient:
         with self.recorder.use_cassette(cassette_name):
             self.client.login()
 
-        assert self.client.last_call is not None
+        assert self.client.initial_call is not None
         assert "SID" in self.client._session.cookies.get_dict().keys()
         assert self.client._session.cookies["SID"] is not None
 

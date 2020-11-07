@@ -1,5 +1,6 @@
 """Provides the Client class."""
-from time import time as now
+from datetime import datetime
+from datetime import timedelta
 
 from requests import Session
 
@@ -15,19 +16,22 @@ KNOWN_SENSORS = ["pmbus", "sensor"]
 class Client:
     """Client used to access Supermicro BMCs."""
 
-    def __init__(self, server, username, password):
+    def __init__(self, server, username, password, session_timeout=30):
         """Initialises an instance of smbmc.Client.
 
         Args:
             server: Address of server in form: 'http://192.168.1.1'.
             username: Username.
             password: Password.
+            session_timeout: Session timeout of the BMC (in minutes).
         """
         self.server = server
         self.username = username
         self.password = password
         self._session = Session()
-        self.last_call = None
+        self.initial_call = datetime(1970, 1, 1)
+        self.session_timeout = session_timeout
+        self.sid_expiry = timedelta(minutes=self.session_timeout)
 
     def login(self):
         """Login to Supermicro web interface.
@@ -48,9 +52,33 @@ class Client:
         )
 
         if "SID" in self._session.cookies.get_dict().keys():
-            self.last_call = now()
+            self.initial_call = datetime.now()
         else:
             raise Exception("Authentication Error")
+
+    def _query(self, data, path="/cgi/ipmi.cgi"):
+        """Query Supermicro BMC.
+
+        Performs session login & token refresh.
+
+        Args:
+            path: Path to query. Defaults to '/cgi/ipmi.cgi'.
+            data: Requested data.
+
+        Returns:
+            request.Response: Response object.
+        """
+        self._refresh_token()
+
+        return self._session.post(
+            f"{self.server}{path}",
+            data=data,
+        )
+
+    def _refresh_token(self):
+        """Refresh SID token if timeout likely."""
+        if datetime.now() > (self.initial_call + self.sid_expiry):
+            self.login()
 
     def get_pmbus_metrics(self):
         """Acquire metrics for all power supplies.
@@ -58,12 +86,10 @@ class Client:
         Returns:
             str: XML response.
         """
-        self.last_call = now()
-        r = self._session.post(
-            f"{self.server}/cgi/ipmi.cgi",
+        r = self._query(
             data={
                 "Get_PSInfoReadings.XML": "(0,0)",
-            },
+            }
         )
 
         psu_list = extract_xml_attr(r.text, ".//PSItem")
@@ -77,13 +103,10 @@ class Client:
         Returns:
             str: XML response.
         """
-        self.last_call = now()
-
-        r = self._session.post(
-            f"{self.server}/cgi/ipmi.cgi",
+        r = self._query(
             data={
                 "SENSOR_INFO.XML": "(1,ff)",
-            },
+            }
         )
 
         sensor_list = extract_xml_attr(r.text, ".//SENSOR")
@@ -110,7 +133,7 @@ class Client:
         if not contains_valid_items(KNOWN_SENSORS, metrics):
             raise Exception("metrics array contains invalid metrics")
 
-        self.login()
+        # self.login()
         result = {}
 
         for metric in metrics:

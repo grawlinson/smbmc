@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "smbmc"
-version = "0.1.0"
+version = "0.2.0"
 description = "Supermicro BMC interface"
 authors = ["George Rawlinson <george@rawlinson.net.nz>"]
 repository = "https://github.com/grawlinson/smbmc"

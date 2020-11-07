@@ -5,6 +5,19 @@ description = "Supermicro BMC interface"
 authors = ["George Rawlinson <george@rawlinson.net.nz>"]
 repository = "https://github.com/grawlinson/smbmc"
 readme = "README.rst"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Topic :: System :: Monitoring",
+    "Topic :: Utilities",
+]
 
 [tool.poetry.dependencies]
 python = "^3.6.1"

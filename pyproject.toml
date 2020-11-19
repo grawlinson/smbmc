@@ -4,6 +4,7 @@ version = "0.2.0"
 description = "Supermicro BMC interface"
 authors = ["George Rawlinson <george@rawlinson.net.nz>"]
 repository = "https://github.com/grawlinson/smbmc"
+documentation = "https://smbmc.readthedocs.io"
 readme = "README.rst"
 classifiers = [
     "Development Status :: 4 - Beta",

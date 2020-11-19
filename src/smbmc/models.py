@@ -4,7 +4,14 @@ from enum import IntFlag
 
 
 class SensorStateEnum(IntEnum):
-    """Enumeration of sensor states."""
+    """Enumeration of sensor states.
+
+    Possible Values:
+
+    - Unspecified
+    - Present
+    - Not Present
+    """
 
     UNSPECIFIED = 0
     PRESENT = 1
@@ -12,7 +19,17 @@ class SensorStateEnum(IntEnum):
 
 
 class SensorUnitEnum(IntEnum):
-    """Enumeration of sensor units."""
+    """Enumeration of sensor units.
+
+    Possible Values:
+
+    - Unspecified
+    - degrees Celsius (°C)
+    - Volts (V)
+    - Amps (A)
+    - Watts (W)
+    - revolutions per minute (rpm)
+    """
 
     UNSPECIFIED = 0
     DEGREES_CELSIUS = 1
@@ -23,7 +40,16 @@ class SensorUnitEnum(IntEnum):
 
 
 class SensorTypeEnum(IntEnum):
-    """Enumeration of sensor types."""
+    """Enumeration of sensor types.
+
+    Possible Values:
+
+    - Unspecified
+    - Temperature
+    - Voltage
+    - Fan
+    - Power Supply
+    """
 
     UNSPECIFIED = 0
     TEMPERATURE = 1
@@ -33,7 +59,20 @@ class SensorTypeEnum(IntEnum):
 
 
 class PowerSupplyFlag(IntFlag):
-    """Flags for power supply specific events."""
+    """Bitflag for power supply specific events.
+
+    Flags:
+
+    - Unspecified
+    - Presence Detected
+    - Failure
+    - Predictive Failure
+    - Source Input Lost
+    - Source Input Out of Range
+    - Source Input Detected (Out of Range)
+    - Configuration Error
+    - Standby
+    """
 
     UNSPECIFIED = 0
     PRESENCE_DETECTED = 1
@@ -53,16 +92,16 @@ class Sensor:
         id: Psuedo-unique id.
         name: Sensor name.
         type: Sensor type.
-        unit: Reading unit. e.g. Temperature - degrees Celsius.
+        unit: Reading unit.
         state: Sensor state.
         flags: Discrete sensors only; type specific flags.
         reading: Sensor reading.
-        lnr: Lower non-recoverable indicator.
-        lc: Lower critical indicator.
-        lnc: Lower non-critical indicator.
-        unc: Upper non-critical indicator.
-        uc: Upper critical indicator.
-        unr: Upper non-recoverable indicator.
+        lnr: Lower non-recoverable threshold.
+        lc: Lower critical threshold.
+        lnc: Lower non-critical threshold.
+        unc: Upper non-critical threshold.
+        uc: Upper critical threshold.
+        unr: Upper non-recoverable threshold.
     """
 
     def __init__(self):
@@ -97,10 +136,10 @@ class PowerSupply:
         output_voltage: Output voltage (V_DC).
         output_current: Output current (A).
         output_power: Output power (W).
-        temp_1: Temperature 1. Possibly intake (degrees Celsius).
-        temp_2: Temperature 2. Possibly outlet (degrees Celsius).
-        fan_1: Fan 1. Possibly intake (r.p.m.).
-        fan_2: Fan 2. Possibly outlet (r.p.m.).
+        temp_1: Temperature 1. Possibly intake (°C).
+        temp_2: Temperature 2. Possibly outlet (°C).
+        fan_1: Fan 1. Possibly intake (rpm).
+        fan_2: Fan 2. Possibly outlet (rpm).
     """
 
     def __init__(self):

@@ -24,6 +24,7 @@ class Client:
             username: Username.
             password: Password.
             session_timeout: Session timeout of the BMC (in minutes).
+                default: 30 minutes.
         """
         self.server = server
         self.username = username
@@ -84,7 +85,8 @@ class Client:
         """Acquire metrics for all power supplies.
 
         Returns:
-            str: XML response.
+            list[PowerSupply]: All power supplies available on the PMBus
+            interface.
         """
         r = self._query(
             data={
@@ -101,7 +103,7 @@ class Client:
         """Acquire metrics for all sensors.
 
         Returns:
-            str: XML response.
+            list[Sensor]: A list of all sensors available to the BMC.
         """
         r = self._query(
             data={
@@ -115,7 +117,7 @@ class Client:
         return sensors
 
     def get_metrics(self, metrics=["pmbus", "sensor"]):  # noqa: C901
-        """Fetch metrics with minimum network calls.
+        """Fetch all metrics available.
 
         Args:
             metrics: List of metric(s) to query.

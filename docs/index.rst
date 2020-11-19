@@ -1,18 +1,7 @@
-Welcome to smbmc
-================
-
-.. autoclass:: smbmc.Client
-   :members:
-   :inherited-members:
+.. include :: ../README.rst
 
 .. toctree::
    :hidden:
    :maxdepth: 2
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   api-reference

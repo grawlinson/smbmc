@@ -141,7 +141,7 @@ def docs(session: Session) -> None:
     session.run("rm", "-rf", output_dir, external=True)
 
     nox_poetry.install(session, nox_poetry.WHEEL)
-    nox_poetry.install(session, "sphinx", "sphinx-autobuild")
+    nox_poetry.install(session, "sphinx", "sphinx-autobuild", "sphinx-rtd-theme")
     session.cd("docs")
     sphinx_args = [
         "-b",

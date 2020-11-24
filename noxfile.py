@@ -1,6 +1,5 @@
 """Nox sessions."""
-import functools
-import os
+import shutil
 from pathlib import Path
 from textwrap import dedent
 
@@ -128,35 +127,36 @@ def precommit(session: Session) -> None:
 
 
 @nox.session(python=latest_version)
-def docs(session: Session) -> None:
+def docs_build(session: Session) -> None:
     """Build the documentation.
 
     Args:
         session: The Session object.
     """
-    output_dir = os.path.join(session.create_tmp(), "output")
-    doctrees, html = map(
-        functools.partial(os.path.join, output_dir), ["doctrees", "html"]
-    )
-    session.run("rm", "-rf", output_dir, external=True)
+    args = session.posargs or ["docs", "docs/_build"]
+    nox_poetry.install(session, nox_poetry.WHEEL)
+    nox_poetry.install(session, "sphinx", "sphinx-rtd-theme")
 
+    build_dir = Path("docs", "_build")
+    if build_dir.exists():
+        shutil.rmtree(build_dir)
+
+    session.run("sphinx-build", *args)
+
+
+@nox.session(python=latest_version)
+def docs(session: Session) -> None:
+    """Build and serve the documentation with live reloading on file changes.
+
+    Args:
+        session: The Session object.
+    """
+    args = session.posargs or ["--open-browser", "docs", "docs/_build"]
     nox_poetry.install(session, nox_poetry.WHEEL)
     nox_poetry.install(session, "sphinx", "sphinx-autobuild", "sphinx-rtd-theme")
-    session.cd("docs")
-    sphinx_args = [
-        "-b",
-        "html",
-        "-W",
-        "-d",
-        doctrees,
-        ".",
-        html,
-    ]
 
-    if not session.interactive:
-        sphinx_cmd = "sphinx-build"
-    else:
-        sphinx_cmd = "sphinx-autobuild"
-        sphinx_args.insert(0, "--open-browser")
+    build_dir = Path("docs", "_build")
+    if build_dir.exists():
+        shutil.rmtree(build_dir)
 
-    session.run(sphinx_cmd, *sphinx_args)
+    session.run("sphinx-autobuild", *args)

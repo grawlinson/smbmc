@@ -4,7 +4,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import nox
-import nox_poetry
+import nox_poetry.patch
 from nox.sessions import Session
 
 # package name
@@ -19,30 +19,6 @@ nox.options.sessions = [f"tests-{latest_version}"]
 nox.options.reuse_existing_virtualenvs = True
 
 locations = ["src", "tests", "noxfile.py", "docs/conf.py"]
-
-
-@nox.session(python=supported_versions)
-def tests(session: Session) -> None:
-    """Run the test suite.
-
-    Args:
-        session: The Session object.
-    """
-    nox_poetry.install(session, nox_poetry.WHEEL)
-    nox_poetry.install(session, "pytest", "betamax")
-    session.run("pytest")
-
-
-@nox.session(python=latest_version)
-def coverage(session: Session) -> None:
-    """Generate coverage report.
-
-    Args:
-        session: The Session object.
-    """
-    nox_poetry.install(session, nox_poetry.WHEEL)
-    nox_poetry.install(session, "pytest", "betamax", "pytest-cov", "coverage[toml]")
-    session.run("pytest", f"--cov={package}", "tests/")
 
 
 def activate_virtualenv_in_precommit_hooks(session: Session) -> None:
@@ -97,6 +73,40 @@ def activate_virtualenv_in_precommit_hooks(session: Session) -> None:
 
 
 @nox.session(python=latest_version)
+def safety(session: Session) -> None:
+    """Scan dependencies for insecure packages.
+
+    Args:
+        session: The Session object.
+    """
+    requirements = nox_poetry.export_requirements(session)
+    session.install(".", "safety")
+    session.run("safety", "check", f"--file={requirements}", "--bare")
+
+
+@nox.session(python=supported_versions)
+def tests(session: Session) -> None:
+    """Run the test suite.
+
+    Args:
+        session: The Session object.
+    """
+    session.install(".", "pytest", "betamax")
+    session.run("pytest")
+
+
+@nox.session(python=latest_version)
+def coverage(session: Session) -> None:
+    """Generate coverage report.
+
+    Args:
+        session: The Session object.
+    """
+    session.install(".", "pytest", "betamax", "pytest-cov", "coverage[toml]")
+    session.run("pytest", f"--cov={package}", "tests/")
+
+
+@nox.session(python=latest_version)
 def precommit(session: Session) -> None:
     """Lint using pre-commit.
 
@@ -107,8 +117,8 @@ def precommit(session: Session) -> None:
         "run",
         "--all-files",
     ]  # "--show-diff-on-failure"]
-    nox_poetry.install(
-        session,
+    session.install(
+        ".",
         "black",
         "darglint",
         "flake8",
@@ -134,8 +144,7 @@ def docs_build(session: Session) -> None:
         session: The Session object.
     """
     args = session.posargs or ["docs", "docs/_build"]
-    nox_poetry.install(session, nox_poetry.WHEEL)
-    nox_poetry.install(session, "sphinx", "sphinx-rtd-theme")
+    session.install(".", "sphinx", "sphinx-rtd-theme")
 
     build_dir = Path("docs", "_build")
     if build_dir.exists():
@@ -152,8 +161,7 @@ def docs(session: Session) -> None:
         session: The Session object.
     """
     args = session.posargs or ["--open-browser", "docs", "docs/_build"]
-    nox_poetry.install(session, nox_poetry.WHEEL)
-    nox_poetry.install(session, "sphinx", "sphinx-autobuild", "sphinx-rtd-theme")
+    session.install(".", "sphinx", "sphinx-autobuild", "sphinx-rtd-theme")
 
     build_dir = Path("docs", "_build")
     if build_dir.exists():

@@ -1,10 +1,6 @@
 _default:
   just --list
 
-#[doc('Install all dependencies to virtual environment')]
-#install-deps:
-#  uv sync --all-groups
-
 [doc('generate wheel/sdist for distribution')]
 build:
     uv build

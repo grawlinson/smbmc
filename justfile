@@ -33,3 +33,7 @@ docs:
 [doc('Build and serve the documentation with live reloading on file changes.')]
 docs-autobuild:
   uv run sphinx-autobuild docs docs/_build
+
+[doc('Remove all files ignored from git')]
+clean:
+  git clean -fX .

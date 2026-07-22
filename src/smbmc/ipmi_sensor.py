@@ -1,15 +1,15 @@
 """Provides IPMI sensor related functions."""
-from enum import auto
-from enum import IntEnum
 
-from .models import PowerSupplyFlag
-from .models import Sensor
-from .models import SensorStateEnum
-from .models import SensorTypeEnum
-from .models import SensorUnitEnum
-from .util import hex_signed_int
-from .util import signed_int
-from .util import ten_bit_str
+from enum import IntEnum, auto
+
+from .models import (
+    PowerSupplyFlag,
+    Sensor,
+    SensorStateEnum,
+    SensorTypeEnum,
+    SensorUnitEnum,
+)
+from .util import hex_signed_int, signed_int, ten_bit_str
 
 SENSOR_READING_SCALE = 1000
 
@@ -47,7 +47,7 @@ def reading_conversion(data: str, m: str, b: str, rb: str) -> float:
     Returns:
         float: Pre-linearisation reading.
     """
-    from math import pow
+    import math
 
     # Extracted from 43.1 - SDR Type 01h, bytes 25, 27, 30.
     m_raw = ten_bit_str(m)
@@ -60,7 +60,7 @@ def reading_conversion(data: str, m: str, b: str, rb: str) -> float:
     km_data = signed_int(km_raw, 4)
     kb_data = signed_int(kb_raw, 4)
 
-    sensor_data = (m_data * int(data, 16) + b_data * pow(10, kb_data)) * pow(
+    sensor_data = (m_data * int(data, 16) + b_data * math.pow(10, kb_data)) * math.pow(
         10, km_data
     )
 
@@ -131,7 +131,7 @@ def perform_linearisation(method: str, reading: str) -> int:
     i_method = int(method, 16)
 
     if i_method == LinearisationEnum.LINEAR:
-        return int((reading * SENSOR_READING_SCALE)) / SENSOR_READING_SCALE
+        return int(reading * SENSOR_READING_SCALE) / SENSOR_READING_SCALE
     else:
         raise NotImplementedError
 
@@ -203,7 +203,7 @@ def process_discrete_sensor(item: dict) -> Sensor:
     Raises:
         NotImplementedError: Raised when sensor type has not been implemented.
     """
-    type = int(item["STYPE"], 16)
+    sensor_type = int(item["STYPE"], 16)
     reading = item["READING"]
     # raw_reading = reading[:2]
     # option = int(item["OPTION"], 16)
@@ -215,10 +215,10 @@ def process_discrete_sensor(item: dict) -> Sensor:
 
     # TODO: add edge-cases from utils.js
     if sensor_state is not SensorStateEnum.NOT_PRESENT:
-        if type == SensorTypeEnum.POWER_SUPPLY:
+        if sensor_type == SensorTypeEnum.POWER_SUPPLY:
             psu = Sensor()
             psu.name = item["NAME"]
-            psu.type = SensorTypeEnum(type)
+            psu.type = SensorTypeEnum(sensor_type)
             psu.flags = PowerSupplyFlag(sensor_d)
             psu.state = sensor_state
             return psu
@@ -239,13 +239,12 @@ def process_sensor_response(sensor_list: list) -> list:
         list: Fully populated sensors.
     """
     sensors = []
-    sensor_id = 0
-    for item in sensor_list:
+    for i, item in enumerate(sensor_list):
         sensor = process_sensor(item)
-        sensor.id = sensor_id
+        sensor.id = i
         sensors.append(sensor)
 
-        sensor_id += 1
+        i += 1
 
     return sensors
 

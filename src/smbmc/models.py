@@ -1,6 +1,6 @@
 """Provides models."""
-from enum import IntEnum
-from enum import IntFlag
+
+from enum import IntEnum, IntFlag
 
 
 class SensorStateEnum(IntEnum):
@@ -104,7 +104,7 @@ class Sensor:
         unr: Upper non-recoverable threshold.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Creates an instance of the Sensor class."""
         self.id = 0
         self.name = ""
@@ -142,7 +142,7 @@ class PowerSupply:
         fan_2: Fan 2. Possibly outlet (rpm).
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Creates an instance of the PowerSupply class."""
         # id : slot no. in server chassis
         # name : power supply serial number

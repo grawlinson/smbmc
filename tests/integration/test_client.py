@@ -1,12 +1,11 @@
 """Integration tests for smbmc.Client class."""
+
 import os
 
 import betamax
 import pytest
 
-from smbmc import Client
-from smbmc import PowerSupply
-from smbmc import Sensor
+from smbmc import Client, PowerSupply, Sensor
 
 SMBMC_SERVER = os.environ.get("SMBMC_SERVER", "http://192.168.1.1")
 SMBMC_USER = os.environ.get("SMBMC_USER", "ipmi_user")
@@ -41,7 +40,7 @@ class TestClient:
             self.client.login()
 
         assert self.client.initial_call is not None
-        assert "SID" in self.client._session.cookies.get_dict().keys()
+        assert "SID" in self.client._session.cookies.get_dict()
         assert self.client._session.cookies["SID"] is not None
 
     def test_get_sensor_metrics(self):
@@ -88,6 +87,8 @@ class TestClient:
         self.recorder = betamax.Betamax(self.client._session)
 
         cassette_name = self.generate_cassette_name("bad_auth")
-        with self.recorder.use_cassette(cassette_name):
-            with pytest.raises(Exception, match="Authentication Error"):
-                assert self.client.login()
+        with (
+            self.recorder.use_cassette(cassette_name),
+            pytest.raises(Exception, match="Authentication Error"),
+        ):
+            assert self.client.login()

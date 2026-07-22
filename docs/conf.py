@@ -1,17 +1,14 @@
 """Configuration file for the Sphinx documentation builder."""
+
 # -- Path setup --------------------------------------------------------------
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import importlib.metadata
 import os
 import sys
-
-try:
-    import importlib.metadata as metadata
-except ImportError:
-    import importlib_metadata as metadata
-from datetime import datetime
+from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.abspath(".."))
 sys.path.insert(0, os.path.abspath("."))
@@ -21,9 +18,8 @@ sys.path.insert(0, os.path.abspath("."))
 
 project = "smbmc"
 author = "George Rawlinson"
-copyright = f"{datetime.now().year}, {author}"
-
-version = metadata.version(project)
+project_copyright = f"{datetime.now(tz=timezone.utc).year}, {author}"
+version = importlib.metadata.version(project)
 release = version
 
 

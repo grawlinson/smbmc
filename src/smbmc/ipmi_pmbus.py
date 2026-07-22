@@ -1,4 +1,5 @@
 """Provides IPMI PMBus related functions."""
+
 from .models import PowerSupply
 
 
@@ -12,11 +13,10 @@ def process_pmbus_response(psu_list: list) -> list:
         list: Fully populated power supplies, complete with ID.
     """
     power_supplies = []
-    psu_id = 0
-    for item in psu_list:
+    for i, item in enumerate(psu_list):
         psu = process_pmbus_psu(item)
-        psu.id = psu_id
-        psu_id += 1
+        psu.id = i
+        i += 1
         power_supplies.append(psu)
 
     return power_supplies

@@ -31,10 +31,7 @@ def contains_valid_items(known_items: list, item_list: list) -> bool:
     Returns:
         True if list contains valid items.
     """
-    for item in item_list:
-        if item not in known_items:
-            return False
-    return True
+    return all(item in known_items for item in item_list)
 
 
 def signed_int(value: int, signed_bit: int) -> int:
@@ -59,7 +56,7 @@ def signed_int(value: int, signed_bit: int) -> int:
     return value
 
 
-def hex_signed_int(value: str, signed_bit=8) -> str:
+def hex_signed_int(value: str, signed_bit: int | None = None) -> str:
     """Convert from unsigned to signed integer as a hexadecimal string.
 
     Args:
@@ -69,6 +66,9 @@ def hex_signed_int(value: str, signed_bit=8) -> str:
     Returns:
         str: Hexadecimal representation of a signed integer.
     """
+    if signed_bit is None:
+        signed_bit = 8
+
     return hex(signed_int(int(value, 16), signed_bit))
 
 

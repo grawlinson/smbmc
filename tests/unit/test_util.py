@@ -1,16 +1,19 @@
 """Unit tests for utility functions."""
+
 import pytest
 
-from smbmc.util import contains_duplicates
-from smbmc.util import contains_valid_items
-from smbmc.util import extract_xml_attr
-from smbmc.util import hex_signed_int
-from smbmc.util import signed_int
-from smbmc.util import ten_bit_str
+from smbmc.util import (
+    contains_duplicates,
+    contains_valid_items,
+    extract_xml_attr,
+    hex_signed_int,
+    signed_int,
+    ten_bit_str,
+)
 
 
 @pytest.mark.parametrize(
-    "items,expected_result",
+    ("items", "expected_result"),
     [
         (
             ["first", "second", "third"],
@@ -33,7 +36,7 @@ def test_contains_duplicates(items, expected_result):
 
 
 @pytest.mark.parametrize(
-    "allowed_items,items,expected_result",
+    ("allowed_items", "items", "expected_result"),
     [
         (
             ["bang-a-rang!", "rufiooooo!"],
@@ -59,7 +62,7 @@ def test_contains_valid_items(allowed_items, items, expected_result):
 
 
 @pytest.mark.parametrize(
-    "unsigned_value,signed_bit,signed_value",
+    ("unsigned_value", "signed_bit", "signed_value"),
     [
         (129, 8, -127),
         (874, 10, -150),
@@ -79,7 +82,7 @@ def test_signed_int(unsigned_value, signed_bit, signed_value):
 
 
 @pytest.mark.parametrize(
-    "unsigned_string,signed_bit,hex_string",
+    ("unsigned_string", "signed_bit", "hex_string"),
     [
         ("10", 0, "0x10"),
         ("120", 8, "0x20"),
@@ -97,7 +100,7 @@ def test_hex_signed_int(unsigned_string, signed_bit, hex_string):
 
 
 @pytest.mark.parametrize(
-    "two_byte_string,ten_bit_int",
+    ("two_byte_string", "ten_bit_int"),
     [
         ("FF", 768),
         ("AB", 512),
@@ -117,7 +120,7 @@ def test_ten_bit_str(two_byte_string, ten_bit_int):
 
 
 @pytest.mark.parametrize(
-    "xml_file,selector,expected_length",
+    ("xml_file", "selector", "expected_length"),
     [
         (
             "ipmi_response_sensors",
@@ -154,8 +157,9 @@ def test_extract_xml(xml_file, selector, expected_length):
         selector: XML Selector used to match specific sub-element(s).
         expected_length: Quantity of expected sub-element(s).
     """
-    xml_string = open(f"tests/unit/{xml_file}.xml").read()
-    extracted_list = extract_xml_attr(xml_string, selector)
+    with open(f"tests/unit/{xml_file}.xml") as xml_file:
+        xml_string = xml_file.read()
+        extracted_list = extract_xml_attr(xml_string, selector)
 
-    assert extracted_list is not None
-    assert len(extracted_list) == expected_length
+        assert extracted_list is not None
+        assert len(extracted_list) == expected_length

@@ -1,20 +1,22 @@
 """Unit tests for IPMI sensor functions."""
+
 import pytest
 
-from smbmc.ipmi_sensor import get_sensor_state
-from smbmc.ipmi_sensor import is_analog_data_format
-from smbmc.ipmi_sensor import is_threshold_sensor
-from smbmc.ipmi_sensor import perform_linearisation
-from smbmc.ipmi_sensor import process_discrete_sensor
-from smbmc.ipmi_sensor import process_sensor_response
-from smbmc.ipmi_sensor import reading_conversion
-from smbmc.models import Sensor
-from smbmc.models import SensorStateEnum
+from smbmc.ipmi_sensor import (
+    get_sensor_state,
+    is_analog_data_format,
+    is_threshold_sensor,
+    perform_linearisation,
+    process_discrete_sensor,
+    process_sensor_response,
+    reading_conversion,
+)
+from smbmc.models import Sensor, SensorStateEnum
 from smbmc.util import extract_xml_attr
 
 
 @pytest.mark.parametrize(
-    "data,m,b,rb,expected_result",
+    ("data", "m", "b", "rb", "expected_result"),
     [
         ("84", "6400", "0000", "d0", 13.200000000000001),
         ("83", "6400", "0000", "d0", 13.1),
@@ -38,7 +40,7 @@ def test_reading_conversion(data, m, b, rb, expected_result):
 
 
 @pytest.mark.parametrize(
-    "er_type,expected_result",
+    ("er_type", "expected_result"),
     [
         ("0x01", True),
         ("1", True),
@@ -58,7 +60,7 @@ def test_is_threshold_sensor(er_type, expected_result):
 
 
 @pytest.mark.parametrize(
-    "unit_type_1,expected_result",
+    ("unit_type_1", "expected_result"),
     [
         ("0x80", True),
         ("91", True),
@@ -79,7 +81,7 @@ def test_is_analog_data_format(unit_type_1, expected_result):
 
 
 @pytest.mark.parametrize(
-    "option,expected_result",
+    ("option", "expected_result"),
     [
         ("0x40", SensorStateEnum.PRESENT),
         ("0x80", SensorStateEnum.NOT_PRESENT),
@@ -96,7 +98,7 @@ def test_get_sensor_state(option, expected_result):
 
 
 @pytest.mark.parametrize(
-    "method,reading,expected_result",
+    ("method", "reading", "expected_result"),
     [
         ("0", 5.0000001, 5.0),
         ("0", 5.0, 5.0),
@@ -127,16 +129,17 @@ def test_perform_linearisation_error():
 
 def test_process_sensor_response():
     """Ensure all items returned are Sensor instances."""
-    xml_file = "ipmi_response_sensors"
+    filename = "ipmi_response_sensors"
     selector = ".//SENSOR"
-    xml_string = open(f"tests/unit/{xml_file}.xml").read()
-    sensor_list = extract_xml_attr(xml_string, selector)
-    sensors = process_sensor_response(sensor_list)
+    with open(f"tests/unit/{filename}.xml") as xml_file:
+        xml_string = xml_file.read()
+        sensor_list = extract_xml_attr(xml_string, selector)
+        sensors = process_sensor_response(sensor_list)
 
-    assert len(sensors) == 28
+        assert len(sensors) == 28
 
-    for sensor in sensors:
-        assert isinstance(sensor, Sensor)
+        for sensor in sensors:
+            assert isinstance(sensor, Sensor)
 
 
 def test_process_threshold_sensor_error():

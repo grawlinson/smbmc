@@ -1,4 +1,5 @@
 """Test Configuration."""
+
 import os
 
 import betamax

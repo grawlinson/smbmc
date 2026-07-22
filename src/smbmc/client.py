@@ -1,14 +1,13 @@
 """Provides the Client class."""
-from datetime import datetime
-from datetime import timedelta
 
-from requests import Session
+from datetime import datetime, timedelta, timezone
+
+import requests
 
 from .ipmi_pmbus import process_pmbus_response
 from .ipmi_sensor import process_sensor_response
-from .util import contains_duplicates
-from .util import contains_valid_items
-from .util import extract_xml_attr
+from .models import PowerSupply, Sensor
+from .util import contains_duplicates, contains_valid_items, extract_xml_attr
 
 KNOWN_SENSORS = ["pmbus", "sensor"]
 
@@ -16,7 +15,13 @@ KNOWN_SENSORS = ["pmbus", "sensor"]
 class Client:
     """Client used to access Supermicro BMCs."""
 
-    def __init__(self, server, username, password, session_timeout=30):
+    def __init__(
+        self,
+        server: str,
+        username: str,
+        password: str,
+        session_timeout: int | None = None,
+    ) -> None:
         """Initialises an instance of smbmc.Client.
 
         Args:
@@ -29,12 +34,15 @@ class Client:
         self.server = server
         self.username = username
         self.password = password
-        self._session = Session()
-        self.initial_call = datetime(1970, 1, 1)
-        self.session_timeout = session_timeout
+        self._session = requests.Session()
+        self.initial_call = datetime(1970, 1, 1, tzinfo=timezone.utc)
+        if session_timeout is None:
+            self.session_timeout = 30
+        else:
+            self.session_timeout = session_timeout
         self.sid_expiry = timedelta(minutes=self.session_timeout)
 
-    def login(self):
+    def login(self) -> None:
         """Login to Supermicro web interface.
 
         Fetches a session ID (SID) cookie, which allows access to the rest
@@ -52,12 +60,12 @@ class Client:
             },
         )
 
-        if "SID" in self._session.cookies.get_dict().keys():
-            self.initial_call = datetime.now()
+        if "SID" in self._session.cookies.get_dict():
+            self.initial_call = datetime.now(tz=timezone.utc)
         else:
             raise Exception("Authentication Error")
 
-    def _query(self, data, path="/cgi/ipmi.cgi"):
+    def _query(self, data: dict, path: str | None = None) -> requests.Response:
         """Query Supermicro BMC.
 
         Performs session login & token refresh.
@@ -67,8 +75,11 @@ class Client:
             data: Requested data.
 
         Returns:
-            request.Response: Response object.
+            requests.Response: Response object.
         """
+        if path is None:
+            path = "/cgi/ipmi.cgi"
+
         self._refresh_token()
 
         return self._session.post(
@@ -76,12 +87,12 @@ class Client:
             data=data,
         )
 
-    def _refresh_token(self):
+    def _refresh_token(self) -> None:
         """Refresh SID token if timeout likely."""
-        if datetime.now() > (self.initial_call + self.sid_expiry):
+        if datetime.now(tz=timezone.utc) > (self.initial_call + self.sid_expiry):
             self.login()
 
-    def get_pmbus_metrics(self):
+    def get_pmbus_metrics(self) -> list[PowerSupply]:
         """Acquire metrics for all power supplies.
 
         Returns:
@@ -99,7 +110,7 @@ class Client:
 
         return power_supplies
 
-    def get_sensor_metrics(self):
+    def get_sensor_metrics(self) -> list[Sensor]:
         """Acquire metrics for all sensors.
 
         Returns:
@@ -116,11 +127,11 @@ class Client:
 
         return sensors
 
-    def get_metrics(self, metrics=["pmbus", "sensor"]):  # noqa: C901
+    def get_metrics(self, metrics: dict | None = None) -> dict:
         """Fetch all metrics available.
 
         Args:
-            metrics: List of metric(s) to query.
+            metrics: List of metric(s) to query. Defaults to ["pmbus", "sensor"]
 
         Raises:
             Exception: Argument contains duplicate metrics.
@@ -129,6 +140,9 @@ class Client:
         Returns:
             dict: A dict containing all metrics.
         """
+        if metrics is None:
+            metrics = ["pmbus", "sensor"]
+
         if contains_duplicates(metrics):
             raise Exception("metrics array contains duplicates")
 

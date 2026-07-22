@@ -1,4 +1,5 @@
 """Unit tests for smbmc.Client class."""
+
 import pytest
 
 from smbmc import Client

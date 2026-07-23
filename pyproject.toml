@@ -3,13 +3,13 @@ name = "smbmc"
 version = "0.2.0"
 description = "Supermicro BMC interface"
 authors = [
-    {name="George Rawlinson", email="<george@rawlinson.net.nz>",},
+    {name="George Rawlinson", email="george@rawlinson.net.nz"},
 ]
 repository = "https://github.com/grawlinson/smbmc"
 documentation = "https://smbmc.readthedocs.io"
 readme = "README.rst"
 license = {text="GPL-3.0-only"}
-requires-python = ">= 3.10"
+requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -19,8 +19,8 @@ classifiers = [
     "Topic :: Utilities",
 ]
 dependencies = [
-  "requests>=2.24.0",
-  "defusedxml>=0.6.0",
+    "requests>=2.24.0",
+    "defusedxml>=0.6.0",
 ]
 
 [build-system]
@@ -29,9 +29,9 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
-  {include-group = "lint"},
-  {include-group = "docs"},
-  {include-group = "test"},
+    {include-group = "lint"},
+    {include-group = "docs"},
+    {include-group = "test"},
 ]
 lint = [
     "ruff>=0.15.22",

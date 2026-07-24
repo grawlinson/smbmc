@@ -42,7 +42,7 @@ jobs:
 
     steps:
       - name: Check out project repository
-      - uses: actions/checkout@v7
+        uses: actions/checkout@v7
 
       - name: Install uv and set the Python version
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0

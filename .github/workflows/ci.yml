@@ -1,0 +1,57 @@
+---
+
+name: Bog standard CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - primary
+
+env:
+  uv_version: "0.11.32"
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: ${{ env.uv_version }}
+
+      - name: ruff - lint
+        run: uv run ruff check .
+
+      - name: ruff - format
+        run: uv run ruff format --check .
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+          - "3.14"
+
+    steps:
+      - name: Check out project repository
+      - uses: actions/checkout@v7
+
+      - name: Install uv and set the Python version
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          version: ${{ env.uv_version }}
+
+      - name: Install the project
+        run: uv sync --locked --dev
+
+      - name: Run tests
+        run: uv run pytest

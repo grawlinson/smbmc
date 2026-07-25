@@ -1,6 +1,6 @@
 [project]
 name = "smbmc"
-version = "0.2.0"
+version = "0.3.0"
 description = "Supermicro BMC interface"
 authors = [
     {name="George Rawlinson", email="george@rawlinson.net.nz"},

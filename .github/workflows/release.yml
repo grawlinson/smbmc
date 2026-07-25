@@ -1,0 +1,33 @@
+---
+
+name: Release
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  pypi:
+    name: Publish to PyPi
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout the project repository
+        uses: actions/checkout@v7
+
+      - name: Install uv and set the Python version
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          python-version: "3.14"
+          version: "0.11.32"
+
+      - name: Build the project
+        run: uv build
+
+      - name: Publish to PyPi
+        run: uv publish

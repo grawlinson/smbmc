@@ -99,6 +99,8 @@ jobs:
     name: Rust test (${{ matrix.toolchain }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
+      # don't let one platform/toolchain cancel the others
+      fail-fast: false
       matrix:
         os:
           - ubuntu-latest
@@ -121,10 +123,23 @@ jobs:
 
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
 
+      # The MSRV is a promise to users of the library, so on the MSRV
+      # toolchain only the libraries are built: dev-dependencies (e.g.
+      # wiremock) may require a newer Rust.
+      - name: cargo build (MSRV, default features)
+        if: matrix.toolchain != 'stable'
+        run: cargo build --workspace --locked --lib
+
+      - name: cargo build (MSRV, all features)
+        if: matrix.toolchain != 'stable'
+        run: cargo build --workspace --locked --lib --all-features
+
       - name: cargo test (default features)
+        if: matrix.toolchain == 'stable'
         run: cargo test --workspace --locked
 
       - name: cargo test (all features)
+        if: matrix.toolchain == 'stable'
         run: cargo test --workspace --locked --all-features
 
   rust-coverage:

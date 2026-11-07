@@ -7,9 +7,106 @@ on:
     tags:
       - v*
 
+permissions:
+  contents: read
+
+env:
+  uv_version: "0.11.32"
+
 jobs:
+  version:
+    name: Check tag matches Cargo version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out project repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Compare versions
+        run: |
+          cargo_version=$(cargo metadata --no-deps --format-version 1 \
+            | jq -r '.packages[] | select(.name == "smbmc") | .version')
+          if [ "v${cargo_version}" != "${GITHUB_REF_NAME}" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} does not match Cargo version ${cargo_version}"
+            exit 1
+          fi
+
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  wheels:
+    name: Wheel (${{ matrix.platform.name }})
+    needs: [version, ci]
+    runs-on: ${{ matrix.platform.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - { name: manylinux x86_64, runner: ubuntu-latest, target: x86_64, manylinux: auto, smoke: true }
+          - { name: manylinux aarch64, runner: ubuntu-24.04-arm, target: aarch64, manylinux: auto, smoke: true }
+          - { name: musllinux x86_64, runner: ubuntu-latest, target: x86_64, manylinux: musllinux_1_2 }
+          - { name: musllinux aarch64, runner: ubuntu-24.04-arm, target: aarch64, manylinux: musllinux_1_2 }
+          - { name: macOS x86_64, runner: macos-latest, target: x86_64-apple-darwin }
+          - { name: macOS arm64, runner: macos-latest, target: aarch64-apple-darwin, smoke: true }
+          - { name: Windows x64, runner: windows-latest, target: x64, smoke: true }
+    steps:
+      - name: Check out project repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Build wheel
+        uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
+        with:
+          target: ${{ matrix.platform.target }}
+          manylinux: ${{ matrix.platform.manylinux }}
+          args: --release --locked --out dist
+
+      # abi3: one wheel covers every supported Python; check the oldest and newest
+      - name: Install uv
+        if: matrix.platform.smoke
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: ${{ env.uv_version }}
+
+      - name: Smoke test wheel
+        if: matrix.platform.smoke
+        shell: bash
+        run: |
+          for py in 3.10 3.14; do
+            uv run --isolated --no-project --python "$py" --with dist/*.whl \
+              python -c "import smbmc; print(smbmc.__version__, smbmc.parse_power_supplies('<IPMI/>'))"
+          done
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: wheel-${{ matrix.platform.runner }}-${{ matrix.platform.target }}-${{ matrix.platform.manylinux || 'native' }}
+          path: dist/*.whl
+          if-no-files-found: error
+
+  sdist:
+    name: Source distribution
+    needs: [version, ci]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out project repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Build sdist
+        uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
+        with:
+          command: sdist
+          args: --out dist
+
+      - name: Upload sdist
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
   pypi:
-    name: Publish to PyPi
+    name: Publish to PyPI
+    needs: [wheels, sdist]
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -17,17 +114,76 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - name: Checkout the project repository
-        uses: actions/checkout@v7
+      - name: Download distributions
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: dist
+          merge-multiple: true
 
-      - name: Install uv and set the Python version
+      - name: Install uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
-          python-version: "3.14"
-          version: "0.11.32"
+          version: ${{ env.uv_version }}
 
-      - name: Build the project
-        run: uv build
+      - name: Publish to PyPI
+        run: uv publish dist/*
 
-      - name: Publish to PyPi
-        run: uv publish
+  crates-io:
+    name: Publish to crates.io
+    needs: [version, ci]
+    runs-on: ubuntu-latest
+    environment:
+      name: crates-io
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Check out project repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
+        with:
+          toolchain: stable
+
+      # Lets a version that was published by hand (e.g. the crate's first
+      # release, before trusted publishing could be configured) pass through.
+      - name: Check whether this version is already on crates.io
+        id: exists
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          status=$(curl -s -o /dev/null -w '%{http_code}' \
+            -A "smbmc-release (github.com/${GITHUB_REPOSITORY})" \
+            "https://crates.io/api/v1/crates/smbmc/${version}")
+          echo "published=$([ "$status" = 200 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          [ "$status" = 200 ] && echo "::notice::smbmc ${version} is already on crates.io; skipping publish"
+          true
+
+      - name: Authenticate with crates.io (trusted publishing)
+        if: steps.exists.outputs.published == 'false'
+        id: auth
+        uses: rust-lang/crates-io-auth-action@3268eb413133e2960fa4ae0e963ca76380c54cd9 # v1.0.6
+
+      - name: Publish smbmc
+        if: steps.exists.outputs.published == 'false'
+        run: cargo publish --package smbmc --locked
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+
+  github-release:
+    name: GitHub release
+    needs: [pypi, crates-io]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create release
+        run: gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}

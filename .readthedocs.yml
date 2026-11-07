@@ -4,6 +4,8 @@ build:
   os: ubuntu-26.04
   tools:
     python: "3"
+    # needed to build the native extension when installing the project
+    rust: "latest"
 
 sphinx:
   configuration: docs/conf.py

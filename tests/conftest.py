@@ -1,16 +1,63 @@
-"""Test Configuration."""
+"""Test configuration.
 
-import os
+Integration tests replay the betamax cassettes recorded against a real BMC
+using a local HTTP server (pytest-httpserver), since HTTP is now performed
+by the native extension rather than ``requests``.
+"""
 
-import betamax
+import json
+from pathlib import Path
 
-SMBMC_SERVER = os.environ.get("SMBMC_SERVER", "http://192.168.1.1")
-SMBMC_USER = os.environ.get("SMBMC_USER", "ipmi_user")
-SMBMC_PASS = os.environ.get("SMBMC_PASS", "ipmi_pass")
+import pytest
+from werkzeug import Response
 
-with betamax.Betamax.configure() as config:
-    config.cassette_library_dir = "tests/integration/cassettes"
-    config.default_cassette_options["match_requests_on"].extend(["body", "path"])
-    config.define_cassette_placeholder("<SERVER>", SMBMC_SERVER)
-    config.define_cassette_placeholder("<USER>", SMBMC_USER)
-    config.define_cassette_placeholder("<PASS>", SMBMC_PASS)
+# Fixtures are shared with (and shipped in) the Rust crate.
+FIXTURES = Path(__file__).parents[1] / "crates" / "smbmc" / "tests" / "fixtures"
+CASSETTES = FIXTURES / "cassettes"
+SMBMC_USER = "ipmi_user"
+SMBMC_PASS = "ipmi_pass"
+
+
+@pytest.fixture
+def replay(httpserver):
+    """Return a function that loads a cassette into the HTTP server.
+
+    Each recorded request must arrive in order, with the same path, method,
+    form body and ``Cookie`` header. The returned base URL is for the client.
+    """
+
+    def load(name: str) -> str:
+        cassette = json.loads((CASSETTES / f"Client_{name}.json").read_text())
+        for interaction in cassette["http_interactions"]:
+            request = interaction["request"]
+            response = interaction["response"]
+            body = (
+                request["body"]["string"]
+                .replace("<USER>", SMBMC_USER)
+                .replace("<PASS>", SMBMC_PASS)
+            )
+            headers = {}
+            if "Cookie" in request["headers"]:
+                headers["Cookie"] = request["headers"]["Cookie"][0]
+            httpserver.expect_ordered_request(
+                request["uri"].removeprefix("<SERVER>"),
+                method=request["method"],
+                data=body,
+                headers=headers,
+            ).respond_with_response(
+                Response(
+                    response["body"]["string"],
+                    status=response["status"]["code"],
+                    headers=[
+                        (name, value)
+                        for name, values in response["headers"].items()
+                        for value in values
+                        if name.lower() not in ("content-length", "transfer-encoding")
+                    ],
+                )
+            )
+        return httpserver.url_for("").rstrip("/")
+
+    yield load
+    httpserver.check_assertions()
+    assert not httpserver.ordered_handlers, "not every recorded request was made"

@@ -1,0 +1,54 @@
+[package]
+name = "smbmc"
+description = "Unofficial interface for obtaining metrics from Supermicro BMCs"
+readme = "README.md"
+keywords = ["supermicro", "bmc", "ipmi", "pmbus", "monitoring"]
+categories = ["hardware-support", "network-programming"]
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[features]
+default = ["rustls"]
+## Synchronous client (`smbmc::blocking`). Must not be used from within an
+## async runtime.
+blocking = ["reqwest/blocking"]
+## TLS via rustls with the `ring` crypto provider (default).
+rustls = [
+    "reqwest/rustls-no-provider",
+    "dep:rustls",
+    "dep:rustls-platform-verifier",
+]
+## TLS via the platform's native library instead of rustls.
+native-tls = ["reqwest/native-tls"]
+## Derive `serde::Serialize`/`Deserialize` for the public models.
+serde = ["dep:serde", "bitflags/serde"]
+
+[dependencies]
+bitflags = "2"
+reqwest = { version = "0.13", default-features = false, features = ["form"] }
+roxmltree = "0.20"
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12", "logging"], optional = true }
+rustls-platform-verifier = { version = "0.7", optional = true }
+serde = { version = "1", features = ["derive"], optional = true }
+thiserror = "2"
+
+[dev-dependencies]
+rcgen = "0.14"
+serde_json = "1"
+tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread"] }
+wiremock = "0.6"
+
+[[example]]
+name = "blocking"
+required-features = ["blocking"]
+
+[package.metadata.docs.rs]
+all-features = true
+
+[lints]
+workspace = true

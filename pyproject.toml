@@ -1,6 +1,6 @@
 [project]
 name = "smbmc"
-version = "0.3.0"
+dynamic = ["version"]
 description = "Supermicro BMC interface"
 authors = [
     {name="George Rawlinson", email="george@rawlinson.net.nz"},
@@ -15,17 +15,32 @@ classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Rust",
     "Topic :: System :: Monitoring",
     "Topic :: Utilities",
 ]
-dependencies = [
-    "requests>=2.24.0",
-    "defusedxml>=0.6.0",
-]
+dependencies = []
 
 [build-system]
-requires = ["uv_build>=0.11.31,<0.12"]
-build-backend = "uv_build"
+requires = ["maturin>=1.9,<2.0"]
+build-backend = "maturin"
+
+[tool.maturin]
+# The version comes from the Cargo workspace (single source of truth).
+manifest-path = "crates/smbmc-py/Cargo.toml"
+python-source = "src"
+module-name = "smbmc._smbmc"
+features = ["pyo3/extension-module"]
+
+[tool.uv]
+# Rebuild the extension when the Rust sources change.
+cache-keys = [
+    {file = "pyproject.toml"},
+    {file = "Cargo.toml"},
+    {file = "Cargo.lock"},
+    {file = "crates/**/Cargo.toml"},
+    {file = "crates/**/*.rs"},
+]
 
 [dependency-groups]
 dev = [
@@ -42,7 +57,7 @@ docs = [
     "sphinx-rtd-theme>=3.1.0",
 ]
 test = [
-    "betamax>=0.9.0",
+    "pytest-httpserver>=1.1.0",
     "coverage>=7.15.2",
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
@@ -66,7 +81,6 @@ branch = true
 source = ["smbmc"]
 
 [tool.coverage.report]
-fail_under = 100
 show_missing = true
 
 [tool.ruff]

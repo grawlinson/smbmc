@@ -1,0 +1,23 @@
+[package]
+name = "smbmc-py"
+description = "Python bindings for smbmc (built with maturin; not published to crates.io)"
+publish = false
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+name = "_smbmc"
+crate-type = ["cdylib"]
+doc = false
+test = false
+
+[dependencies]
+pyo3 = { version = "0.30", features = ["abi3-py310"] }
+smbmc = { path = "../smbmc", features = ["blocking"] }
+
+[lints]
+workspace = true

@@ -13,9 +13,18 @@ check *ARGS:
 format *ARGS:
     uv run ruff format {{ ARGS }}
 
-[doc('Run the test suite')]
+[doc('Run the Python test suite (rebuilds the extension if Rust changed)')]
 test *ARGS:
     uv run pytest {{ ARGS }}
+
+[doc('Run the Rust test suite')]
+cargo-test *ARGS:
+    cargo test --workspace --all-features {{ ARGS }}
+
+[doc('Lint Rust code with `cargo fmt` and `cargo clippy`')]
+cargo-check:
+    cargo fmt --all --check
+    cargo clippy --workspace --all-targets --all-features -- -D warnings
 
 [doc('Generate coverage report')]
 test-cov *ARGS:

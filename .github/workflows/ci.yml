@@ -7,6 +7,8 @@ on:
   push:
     branches:
       - primary
+  # Also run as the gate for release.yml
+  workflow_call:
 
 env:
   uv_version: "0.11.32"
@@ -17,21 +19,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out project repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install uv and set the Python version
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           version: ${{ env.uv_version }}
 
+      # --only-group: ruff doesn't need the project (or its Rust extension) built
       - name: ruff - lint
-        run: uv run ruff check .
+        run: uv run --only-group lint ruff check .
 
       - name: ruff - format
-        run: uv run ruff format --check .
+        run: uv run --only-group lint ruff format --check .
 
   test:
-    name: Test
+    name: Python test
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -44,7 +47,7 @@ jobs:
 
     steps:
       - name: Check out project repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install uv and set the Python version
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
@@ -52,8 +55,112 @@ jobs:
           python-version: ${{ matrix.python-version }}
           version: ${{ env.uv_version }}
 
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
+        with:
+          toolchain: stable
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+
+      # Builds the native extension with maturin (via the build backend)
       - name: Install the project
         run: uv sync --locked --dev
 
       - name: Run tests
-        run: uv run pytest
+        run: uv run pytest --cov=smbmc
+
+  rust-lint:
+    name: Rust lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out project repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
+        with:
+          toolchain: stable
+          components: clippy, rustfmt
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+
+      - name: cargo fmt
+        run: cargo fmt --all --check
+
+      - name: cargo clippy
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+      - name: cargo doc
+        run: cargo doc --workspace --no-deps --all-features
+        env:
+          RUSTDOCFLAGS: -D warnings
+
+  rust-test:
+    name: Rust test (${{ matrix.toolchain }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # don't let one platform/toolchain cancel the others
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+        toolchain:
+          - stable
+        include:
+          # MSRV, keep in sync with `rust-version` in Cargo.toml
+          - os: ubuntu-latest
+            toolchain: "1.85"
+    steps:
+      - name: Check out project repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+
+      # The MSRV is a promise to users of the library, so on the MSRV
+      # toolchain only the libraries are built: dev-dependencies (e.g.
+      # wiremock) may require a newer Rust.
+      - name: cargo build (MSRV, default features)
+        if: matrix.toolchain != 'stable'
+        run: cargo build --workspace --locked --lib
+
+      - name: cargo build (MSRV, all features)
+        if: matrix.toolchain != 'stable'
+        run: cargo build --workspace --locked --lib --all-features
+
+      - name: cargo test (default features)
+        if: matrix.toolchain == 'stable'
+        run: cargo test --workspace --locked
+
+      - name: cargo test (all features)
+        if: matrix.toolchain == 'stable'
+        run: cargo test --workspace --locked --all-features
+
+  rust-coverage:
+    name: Rust coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out project repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
+        with:
+          toolchain: stable
+          components: llvm-tools-preview
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@c509219cf42fba86913069efd0ade2458c59337b # v2.90.1
+        with:
+          tool: cargo-llvm-cov
+
+      - name: Measure coverage
+        run: cargo llvm-cov --workspace --all-features --locked --lcov --output-path rust.lcov

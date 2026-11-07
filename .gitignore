@@ -140,3 +140,8 @@ cython_debug/
 
 # ruff cache
 .ruff_cache/
+
+# Rust
+target/
+*.profraw
+*.lcov

@@ -1,0 +1,19 @@
+[workspace]
+resolver = "3"
+members = ["crates/smbmc", "crates/smbmc-py"]
+
+[workspace.package]
+version = "0.4.0"
+authors = ["George Rawlinson <george@rawlinson.net.nz>"]
+edition = "2024"
+rust-version = "1.85"
+license = "GPL-3.0-only"
+repository = "https://github.com/grawlinson/smbmc"
+homepage = "https://github.com/grawlinson/smbmc"
+
+[workspace.lints.rust]
+missing_docs = "warn"
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }

@@ -40,18 +40,6 @@ wheels = [
 ]
 
 [[package]]
-name = "betamax"
-version = "0.9.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "requests" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/c2/a2/b5a47f7c57ef30337503bf7ea959e498a314018eb74dd833d4bd4a689e03/betamax-0.9.0.tar.gz", hash = "sha256:82316e1679bc6879e3c83318d016b54b7c9225ff08c4462de4813e22038d5f94", size = 79957, upload-time = "2024-02-08T13:13:37.546Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ac/80/84dfae1dea86beb985c9aeaf907a7c98e1dd9de2156c8dd2e336d868f38a/betamax-0.9.0-py2.py3-none-any.whl", hash = "sha256:880d6da87eaf7e61c42bdc4240f0ac04ab5365bd7f2798784c18d37d8cf747bc", size = 33418, upload-time = "2024-02-08T13:13:23.888Z" },
-]
-
-[[package]]
 name = "certifi"
 version = "2026.7.22"
 source = { registry = "https://pypi.org/simple" }
@@ -269,15 +257,6 @@ wheels = [
 [package.optional-dependencies]
 toml = [
     { name = "tomli", marker = "python_full_version <= '3.11'" },
-]
-
-[[package]]
-name = "defusedxml"
-version = "0.7.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/0f/d5/c66da9b79e5bdb124974bfe172b4daf3c984ebd9c2a06e2b8a4dc7331c72/defusedxml-0.7.1.tar.gz", hash = "sha256:1bb3032db185915b62d7c6209c5a8792be6a32ab2fedacc84e01b52c51aa3e69", size = 75520, upload-time = "2021-03-08T10:59:26.269Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl", hash = "sha256:a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61", size = 25604, upload-time = "2021-03-08T10:59:24.45Z" },
 ]
 
 [[package]]
@@ -510,6 +489,18 @@ wheels = [
 ]
 
 [[package]]
+name = "pytest-httpserver"
+version = "1.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "werkzeug" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/37/ff/81c955e8fbb0323e817d178dd653de90c81896e819a5df65c1e1c327155a/pytest_httpserver-1.2.0.tar.gz", hash = "sha256:d07744ce2efaafa0575ed3081d416b999c773b09e84aa95065138bedc3e12352", size = 71860, upload-time = "2026-10-05T19:00:25.597Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8d/34/aa11718873f8cd3d9b3c58938e537af0c2d9cb108160357f5db2af6ddd66/pytest_httpserver-1.2.0-py3-none-any.whl", hash = "sha256:749937892dbf909c8b703503b491be66fc24073e7988bf9b4d783af4f33da942", size = 23392, upload-time = "2026-10-05T19:00:26.998Z" },
+]
+
+[[package]]
 name = "requests"
 version = "2.34.2"
 source = { registry = "https://pypi.org/simple" }
@@ -560,19 +551,14 @@ wheels = [
 
 [[package]]
 name = "smbmc"
-version = "0.3.0"
 source = { editable = "." }
-dependencies = [
-    { name = "defusedxml" },
-    { name = "requests" },
-]
 
 [package.dev-dependencies]
 dev = [
-    { name = "betamax" },
     { name = "coverage" },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "pytest-httpserver" },
     { name = "ruff" },
     { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "sphinx", version = "9.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
@@ -593,24 +579,20 @@ lint = [
     { name = "ruff" },
 ]
 test = [
-    { name = "betamax" },
     { name = "coverage" },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "pytest-httpserver" },
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "defusedxml", specifier = ">=0.6.0" },
-    { name = "requests", specifier = ">=2.24.0" },
-]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "betamax", specifier = ">=0.9.0" },
     { name = "coverage", specifier = ">=7.15.2" },
     { name = "pytest", specifier = ">=9.1.1" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
+    { name = "pytest-httpserver", specifier = ">=1.1.0" },
     { name = "ruff", specifier = ">=0.15.22" },
     { name = "sphinx", specifier = ">=8.1.3" },
     { name = "sphinx-autobuild", specifier = ">=2024.10.3" },
@@ -623,10 +605,10 @@ docs = [
 ]
 lint = [{ name = "ruff", specifier = ">=0.15.22" }]
 test = [
-    { name = "betamax", specifier = ">=0.9.0" },
     { name = "coverage", specifier = ">=7.15.2" },
     { name = "pytest", specifier = ">=9.1.1" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
+    { name = "pytest-httpserver", specifier = ">=1.1.0" },
 ]
 
 [[package]]
@@ -1188,4 +1170,16 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/37/c3/48e2c03d2bd79bb45948841c592d24156312dd5f58cdf8f549febe652fb6/websockets-16.1.1-pp311-pypy311_pp73-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:b6b9dadbef0cccd9f4c4ee96b08898afa73e26803bbe0f6aeb5bb12b0074206d", size = 179190, upload-time = "2026-07-17T22:51:01.129Z" },
     { url = "https://files.pythonhosted.org/packages/2d/3f/73e511ecf2496ceac57dd4ed8388efe2bcf0769338a2dbf242c8366ae87e/websockets-16.1.1-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:56cd5fc4f10a9ea8aa0804bddb7b42506cf9e136046f3b4c27de8fec9e2ecba5", size = 180330, upload-time = "2026-07-17T22:51:02.603Z" },
     { url = "https://files.pythonhosted.org/packages/be/4d/2d0d67834092e354d2b0498f014a41249a89556bc406cf86f3e1557bb463/websockets-16.1.1-py3-none-any.whl", hash = "sha256:6abbd3e82c731c8e531714466acd5d87b5e88ac3243465337ba71d68e23ae7e3", size = 173814, upload-time = "2026-07-17T22:51:04.184Z" },
+]
+
+[[package]]
+name = "werkzeug"
+version = "3.1.9"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "markupsafe" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a4/34/4dd12fc8bb7d61c91467ec3efe415ffa7d5456f799954b40c5bbaeae470e/werkzeug-3.1.9.tar.gz", hash = "sha256:55ca7c70a75689be937aa27f8ff4b018f06ff4838fc73045560bf0f5a1291060", size = 940188, upload-time = "2026-09-27T18:33:41.637Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a1/38/df03f564f43cec2684823f3cccae1a652ee7face1cbaa76fb223096e64d7/werkzeug-3.1.9-py3-none-any.whl", hash = "sha256:6392e50c78460ba618e5b21f08a71f59c99ce99cdc6cf6e3dd7e6ccca8754fab", size = 228700, upload-time = "2026-09-27T18:33:39.685Z" },
 ]
